@@ -3,19 +3,22 @@ module CalendariumRomanum
     # Provides methods computing dates of movable feasts
     # and utilities for common computations of relative dates
     module Dates
-      # (see .nativity)
-      def self.first_advent_sunday(year)
+      include DateHelper
+      extend self
+
+      # (see #nativity)
+      def first_advent_sunday(year)
         sunday_before(nativity(year)) - 3 * WEEK
       end
 
       # @param year [Integer] liturgical year
       # @return [Date]
-      def self.nativity(year)
+      def nativity(year)
         Date.new(year, 12, 25)
       end
 
-      # (see .nativity)
-      def self.holy_family(year)
+      # (see #nativity)
+      def holy_family(year)
         xmas = nativity(year)
         if xmas.sunday?
           return Date.new(year, 12, 30)
@@ -24,15 +27,15 @@ module CalendariumRomanum
         end
       end
 
-      # (see .nativity)
-      def self.mother_of_god(year)
+      # (see #nativity)
+      def mother_of_god(year)
         octave_of(nativity(year))
       end
 
       # @param year [Integer] liturgical year
       # @param sunday [Boolean] transfer to Sunday?
       # @return [Date]
-      def self.epiphany(year, sunday: false)
+      def epiphany(year, sunday: false)
         if sunday
           # GNLYC 7 a)
           return sunday_after(Date.new(year + 1, 1, 1))
@@ -44,7 +47,7 @@ module CalendariumRomanum
       # @param year [Integer] liturgical year
       # @param epiphany_on_sunday [Boolean] was Epiphany transferred to Sunday?
       # @return [Date]
-      def self.baptism_of_lord(year, epiphany_on_sunday: false)
+      def baptism_of_lord(year, epiphany_on_sunday: false)
         e = epiphany(year, sunday: epiphany_on_sunday)
         if e.day > 6
           e + 1
@@ -53,13 +56,13 @@ module CalendariumRomanum
         end
       end
 
-      # (see .nativity)
-      def self.ash_wednesday(year)
+      # (see #nativity)
+      def ash_wednesday(year)
         easter_sunday(year) - (6 * WEEK + 4)
       end
 
-      # (see .nativity)
-      def self.easter_sunday(year)
+      # (see #nativity)
+      def easter_sunday(year)
         year += 1
 
         # algorithm below taken from the 'easter' gem:
@@ -85,23 +88,23 @@ module CalendariumRomanum
         end
       end
 
-      # (see .nativity)
-      def self.palm_sunday(year)
+      # (see #nativity)
+      def palm_sunday(year)
         easter_sunday(year) - 7
       end
 
-      # (see .nativity)
-      def self.good_friday(year)
+      # (see #nativity)
+      def good_friday(year)
         easter_sunday(year) - 2
       end
 
-      # (see .nativity)
-      def self.holy_saturday(year)
+      # (see #nativity)
+      def holy_saturday(year)
         easter_sunday(year) - 1
       end
 
       # (see .epiphany)
-      def self.ascension(year, sunday: false)
+      def ascension(year, sunday: false)
         if sunday
           # GNLYC 7 b)
           return easter_sunday(year) + 6 * WEEK
@@ -110,18 +113,18 @@ module CalendariumRomanum
         pentecost(year) - 10
       end
 
-      # (see .nativity)
-      def self.pentecost(year)
+      # (see #nativity)
+      def pentecost(year)
         easter_sunday(year) + 7 * WEEK
       end
 
-      # (see .nativity)
-      def self.holy_trinity(year)
+      # (see #nativity)
+      def holy_trinity(year)
         octave_of(pentecost(year))
       end
 
       # (see .epiphany)
-      def self.corpus_christi(year, sunday: false)
+      def corpus_christi(year, sunday: false)
         if sunday
           # GNLYC 7 c)
           return holy_trinity(year) + WEEK
@@ -130,102 +133,24 @@ module CalendariumRomanum
         holy_trinity(year) + 4
       end
 
-      # (see .nativity)
-      def self.sacred_heart(year)
+      # (see #nativity)
+      def sacred_heart(year)
         corpus_christi(year) + 8
       end
 
-      # (see .nativity)
-      def self.mother_of_church(year)
+      # (see #nativity)
+      def mother_of_church(year)
         pentecost(year) + 1
       end
 
-      # (see .nativity)
-      def self.immaculate_heart(year)
+      # (see #nativity)
+      def immaculate_heart(year)
         pentecost(year) + 20
       end
 
-      # (see .nativity)
-      def self.christ_king(year)
+      # (see #nativity)
+      def christ_king(year)
         first_advent_sunday(year + 1) - 7
-      end
-
-      # utility methods
-
-      # @param weekday [Integer]
-      # @param date [Date]
-      # @return [Date]
-      def self.weekday_before(weekday, date)
-        if date.wday == weekday
-          date - WEEK
-        elsif weekday < date.wday
-          date - (date.wday - weekday)
-        else
-          date - (date.wday + WEEK - weekday)
-        end
-      end
-
-      # (see .weekday_before)
-      def self.weekday_after(weekday, date)
-        if date.wday == weekday
-          date + WEEK
-        elsif weekday > date.wday
-          date + (weekday - date.wday)
-        else
-          date + (WEEK - date.wday + weekday)
-        end
-      end
-
-      # @param date [Date]
-      # @return [Date]
-      def self.octave_of(date)
-        date + WEEK
-      end
-
-      class << self
-        # @!method sunday_before(date)
-        #   @param date [Date]
-        #   @return [Date]
-        # @!method monday_before(date)
-        #   (see .sunday_before)
-        # @!method tuesday_before(date)
-        #   (see .sunday_before)
-        # @!method wednesday_before(date)
-        #   (see .sunday_before)
-        # @!method thursday_before(date)
-        #   (see .sunday_before)
-        # @!method friday_before(date)
-        #   (see .sunday_before)
-        # @!method saturday_before(date)
-        #   (see .sunday_before)
-
-        # @!method sunday_after(date)
-        #   @param date [Date]
-        #   @return [Date]
-        # @!method monday_after(date)
-        #   (see .sunday_after)
-        # @!method tuesday_after(date)
-        #   (see .sunday_after)
-        # @!method wednesday_after(date)
-        #   (see .sunday_after)
-        # @!method thursday_after(date)
-        #   (see .sunday_after)
-        # @!method friday_after(date)
-        #   (see .sunday_after)
-        # @!method saturday_after(date)
-        #   (see .sunday_after)
-
-        # @api private
-        WEEKDAYS = %w(sunday monday tuesday wednesday thursday friday saturday).freeze
-        WEEKDAYS.each_with_index do |weekday, weekday_i|
-          define_method "#{weekday}_before" do |date|
-            send('weekday_before', weekday_i, date)
-          end
-
-          define_method "#{weekday}_after" do |date|
-            send('weekday_after', weekday_i, date)
-          end
-        end
       end
     end
   end

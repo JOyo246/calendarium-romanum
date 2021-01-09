@@ -42,7 +42,7 @@ EOS
       Data.each {|c| puts c.siglum }
     end
 
-    desc 'errors FILE1, ...', 'find errors in sanctorale data files'
+    desc 'errors FILE1 ...', 'find errors in sanctorale data files'
     def errors(*files)
       files.each do |path|
         begin
@@ -53,9 +53,29 @@ EOS
       end
     end
 
-    desc 'cmp FILE1, FILE2', 'detect differences between two sanctorale data files'
+    desc 'cmp FILE1 FILE2', 'detect differences between two sanctorale data files'
+    option :no_rank, type: :boolean, desc: 'ignore differences of rank'
+    option :no_colour, type: :boolean, desc: 'ignore differences of colour'
+    option :no_symbol, type: :boolean, desc: 'ignore differences of symbol'
+    option :title, type: :boolean, desc: 'report differences of title'
     def cmp(a, b)
-      Comparator.new.call(a, b)
+      properties = Comparator::DEFAULT_PROPERTIES
+      options.each_key do |k|
+        if k.start_with? 'no_'
+          properties.delete k.sub('no_', '').to_sym
+        else
+          properties << k.to_sym
+        end
+      end
+      Comparator.new(properties).call(a, b)
+    end
+
+    desc 'merge FILE1 ...', 'loads sanctorale data files on top of each other, prints the resulting sanctorale'
+    option :front_matter, type: :boolean, desc: 'output YAML front matter'
+    def merge(*files)
+      sanctoralia = files.collect {|path| sanctorale_from_path path }
+      merged = SanctoraleFactory.create_layered *sanctoralia
+      SanctoraleWriter.new(front_matter: options[:front_matter]).write merged, STDOUT
     end
 
     desc 'id FILE', 'print celebration identifiers found in a sanctorale data file'
